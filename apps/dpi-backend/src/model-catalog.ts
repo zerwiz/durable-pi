@@ -177,4 +177,19 @@ export const curatedModels = [
     icon: "gemini.png",
   },
 ] as const;
+
+// DPI_EXTRA_MODELS: a backend pointed at another OpenAI-compatible provider (DPI_BASE_URL) needs that
+// provider's own model ids. Comma-separated as <provider>/<modelId>[=<Display name>]; without this the
+// catalog offers only OpenRouter ids and every session is refused with "Unknown model".
+const extraModels: any[] = [];
+for (const spec of (process.env.DPI_EXTRA_MODELS ?? "").split(",").map((x) => x.trim()).filter(Boolean)) {
+  const [ref, display] = spec.split("=");
+  const slash = ref.indexOf("/");
+  if (slash < 1) continue;
+  const provider = ref.slice(0, slash);
+  const id = ref.slice(slash + 1);
+  extraModels.push({ id, name: display ?? id, tier: "A", icon: provider + ".png", provider });
+}
+export const modelCatalog: any[] = [...curatedModels, ...extraModels];
+
 export const defaultModelId = "anthropic/claude-sonnet-5.5";

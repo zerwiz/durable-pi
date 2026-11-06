@@ -31,6 +31,14 @@ monitor.start();
 const mux = new StreamMux(registry, monitor);
 
 const allowedHosts = new Set([`localhost:${port}`, `127.0.0.1:${port}`, `[::1]:${port}`]);
+
+// DPI_ALLOWED_HOSTS: behind a tunnel or a reverse proxy the Host header is the PUBLIC name, not this
+// machine's. Comma-separated; both "name" and "name:port" are admitted, so a tunnelled visit (no port)
+// and a LAN visit (with port) both pass. Without this the hub answers 421 for every proxied request.
+for (const h of (process.env.DPI_ALLOWED_HOSTS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean)) {
+  allowedHosts.add(h);
+  allowedHosts.add(h + ":" + port);
+}
 if (host !== "127.0.0.1" && host !== "localhost") {
   allowedHosts.add(`${hostname().toLowerCase()}:${port}`);
   allowedHosts.add(

@@ -2762,3 +2762,41 @@ textarea::placeholder {
     justify-content: flex-start;
   }
 }
+
+/* MOBILE SHELL — the phone is a first-class client, and the shell must give it a scrollable page.
+   Three faults measured on a phone (2026-11-06): nothing scrolled because the shell's height came from
+   the desktop viewport; 100vh includes the browser chrome so the last row sat under it; and the panes
+   swallowed the touch gesture. dvh fixes the viewport, -webkit-overflow-scrolling gives momentum, and
+   touch-action: pan-y lets a finger scroll a pane instead of being captured by the layout. */
+html,
+body,
+#app,
+#root {
+  min-height: 100dvh;
+  height: auto;
+}
+body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+@media (max-width: 860px) {
+  html,
+  body,
+  #app,
+  #root {
+    height: auto;
+    min-height: 100dvh;
+  }
+  /* any pane that scrolls on desktop must be a touch scroller on a phone */
+  [class*="pane"],
+  [class*="panel"],
+  [class*="scroll"],
+  main,
+  section {
+    max-height: none;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+}

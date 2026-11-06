@@ -39,7 +39,8 @@ import { randomUUID } from "node:crypto";
 import { BACKGROUND_CONTEXT as ctx, withAbortSignal } from "@earendil-works/chord/context";
 import { createModels } from "@earendil-works/pi-ai/models";
 import { openrouterProvider } from "@earendil-works/pi-ai/providers/openrouter";
-import { curatedModels, defaultModelId } from "./model-catalog.js";
+import { openaiCompatibleProvider } from "./openai-compatible.js";
+import { modelCatalog as curatedModels, defaultModelId } from "./model-catalog.js";
 import { fauxModels, installFaux } from "./faux.js";
 import {
   Harness,
@@ -90,7 +91,7 @@ export interface StoreOptions {
   dataDir: string;
   startDirs: string[];
   name: string;
-  provider: "openrouter" | "faux";
+  provider: "openrouter" | "faux" | "openai-compatible";
 }
 
 /** Agent documents a client may read or stream, by kind. */
@@ -178,7 +179,10 @@ export class Store {
 
   private constructor(readonly options: StoreOptions) {
     if (options.provider === "faux") installFaux(this.models);
-    else {
+    else if (options.provider === "openai-compatible") {
+      // ANY OpenAI-compatible endpoint: its own models, its own wire, no OpenRouter catalogue to satisfy.
+      this.models.setProvider(openaiCompatibleProvider(process.env));
+    } else {
       const provider = openrouterProvider();
       const catalog = provider.getModels();
       for (const model of curatedModels)

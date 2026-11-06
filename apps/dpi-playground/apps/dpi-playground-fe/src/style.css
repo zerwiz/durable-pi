@@ -2762,3 +2762,34 @@ textarea::placeholder {
     justify-content: flex-start;
   }
 }
+
+/* MOBILE SHELL — the phone is a first-class client.
+   Three faults measured on a real phone (2026-11-06): the page did not scroll because its height came
+   from the desktop layout; 100vh includes the browser chrome, so the last row sat underneath it; and the
+   panes captured the touch gesture. dvh fixes the viewport, -webkit-overflow-scrolling gives momentum,
+   touch-action: pan-y hands the gesture to the pane that owns the content. */
+html,
+body,
+#app,
+#root {
+  min-height: 100dvh;
+  height: auto;
+}
+body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+@media (max-width: 860px) {
+  /* any pane that scrolls on a desktop must be a touch scroller on a phone */
+  [class*="pane"],
+  [class*="panel"],
+  [class*="scroll"],
+  main,
+  section {
+    max-height: none;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+}

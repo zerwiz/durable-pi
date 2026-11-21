@@ -40,7 +40,7 @@ import { BACKGROUND_CONTEXT as ctx, withAbortSignal } from "@earendil-works/chor
 import { createModels } from "@earendil-works/pi-ai/models";
 import { openrouterProvider } from "@earendil-works/pi-ai/providers/openrouter";
 import { openaiCompatibleProvider } from "./openai-compatible.js";
-import { modelCatalog as curatedModels, defaultModelId } from "./model-catalog.js";
+import { curatedModels as openrouterModels, modelCatalog as curatedModels, defaultModelId, compatibleDefaultModelId } from "./model-catalog.js";
 import { fauxModels, installFaux } from "./faux.js";
 import {
   Harness,
@@ -185,11 +185,11 @@ export class Store {
     } else {
       const provider = openrouterProvider();
       const catalog = provider.getModels();
-      for (const model of curatedModels)
+      for (const model of openrouterModels)
         if (!catalog.some((m) => m.id === model.id)) throw Error(`OpenRouter catalog missing ${model.id}`);
       this.models.setProvider({
         ...provider,
-        getModels: () => catalog.filter((m) => curatedModels.some((c) => c.id === m.id)),
+        getModels: () => catalog.filter((m) => openrouterModels.some((c) => c.id === m.id)),
       });
     }
     mkdirSync(options.dataDir, { recursive: true, mode: 0o700 });
@@ -268,7 +268,8 @@ export class Store {
   }
 
   private defaultModel() {
-    return this.options.provider === "faux" ? fauxModels[0].id : defaultModelId;
+    if (this.options.provider === "faux") return fauxModels[0].id;
+    return this.options.provider === "openai-compatible" ? compatibleDefaultModelId() : defaultModelId;
   }
 
   private async loadModels(): Promise<ModelInfo[]> {
@@ -307,6 +308,10 @@ export class Store {
     if (this.options.provider === "faux") {
       const id = fauxModels.some((m) => m.id === model?.modelId) ? model!.modelId : fauxModels[0].id;
       return { provider: "faux", modelId: id };
+    }
+    if (this.options.provider === "openai-compatible") {
+      const known = curatedModels.some((m) => m.id === model?.modelId && m.provider !== undefined);
+      return { provider: "openai-compatible", modelId: known ? model!.modelId : compatibleDefaultModelId() };
     }
     const exact = model?.provider === "openrouter" ? model.modelId : `${model?.provider}/${model?.modelId}`;
     return {

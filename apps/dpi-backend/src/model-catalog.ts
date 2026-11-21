@@ -193,3 +193,8 @@ for (const spec of (process.env.DPI_EXTRA_MODELS ?? "").split(",").map((x) => x.
 export const modelCatalog: any[] = [...curatedModels, ...extraModels];
 
 export const defaultModelId = "anthropic/claude-sonnet-5.5";
+
+/** The default for an openai-compatible backend: DPI_DEFAULT_MODEL, else the first DPI_EXTRA_MODELS entry. */
+export function compatibleDefaultModelId(): string {
+  return process.env.DPI_DEFAULT_MODEL?.trim() || extraModels[0]?.id || defaultModelId;
+}
